@@ -174,4 +174,3 @@ authenticated and deliberately protected by a same-site resource policy.
 The existing CivicPulse teal identity is preserved. UI/UX Pro Max accessibility
 guidance, 21st.dev component patterns and restrained Motion interactions inform
 the interface without replacing its established layouts.
->>>>>>> 53b45ca (chore: initialize CivicPulse repository)
