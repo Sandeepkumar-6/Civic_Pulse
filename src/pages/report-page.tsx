@@ -85,6 +85,7 @@ export function CitizenReportPage() {
   const [step, setStep] = useState(0)
   const [category, setCategory] = useState('')
   const [description, setDescription] = useState('')
+  const [descriptionTouched, setDescriptionTouched] = useState(false)
   const [photos, setPhotos] = useState<File[]>([])
   const [location, setLocation] = useState<LocationFields>(initialLocation)
   const [error, setError] = useState('')
@@ -104,7 +105,10 @@ export function CitizenReportPage() {
   function validate(current = step) {
     let message = ''
     if (current === 0 && !category) message = 'Choose the category that best matches the issue.'
-    if (current === 1 && description.trim().length < 20) message = 'Describe the issue in at least 20 characters.'
+    if (current === 1) {
+      setDescriptionTouched(true)
+      if (description.trim().length < 20) message = 'Describe the issue in at least 20 characters.'
+    }
     if (current === 3) {
       if (!location.address.trim() || !location.city.trim() || !location.state.trim()) message = 'Enter the street address, city and state.'
       else if (!/^[1-9]\d{5}$/.test(location.pincode)) message = 'Enter a valid 6-digit Indian PIN code.'
@@ -215,7 +219,7 @@ export function CitizenReportPage() {
   }
 
   const selectedCategory = categories.find((item) => item.name === category)
-  const descriptionError = step === 1 && description.trim().length < 20 ? 'Describe the issue in at least 20 characters.' : ''
+  const descriptionError = descriptionTouched && description.trim().length < 20 ? 'Describe the issue in at least 20 characters.' : ''
   const updateLocation = (field: keyof LocationFields, value: string) => setLocation((current) => ({ ...current, [field]: value }))
 
   return <><Header /><main id="main-content" className="container py-8 sm:py-12 lg:py-16"><div className="mx-auto max-w-5xl"><div className="mb-8"><Badge>Citizen report</Badge><h1 className="mt-3 font-display text-3xl font-extrabold tracking-tight sm:text-4xl">Report a civic issue</h1><p className="mt-2 max-w-2xl leading-7 text-muted-foreground">Share clear details so the appropriate municipal team can review the issue. Required fields are marked.</p></div><StepProgress current={step} />
