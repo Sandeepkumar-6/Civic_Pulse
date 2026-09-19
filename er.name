@@ -144,4 +144,154 @@
 [32m+       <BrowserRouter>[m
 [32m+         <AuthProvider>[m
 [32m+           <AdminDashboardPage />[m
-[32m+  
+[32m+         </AuthProvider>[m
+[32m+       </BrowserRouter>,[m
+[32m+     )[m
+[32m+ [m
+[32m+     const search = await screen.findByLabelText('Search')[m
+[32m+     await user.type(search, 'CP-2026-PUN548')[m
+[32m+     await user.selectOptions(screen.getByLabelText('Category'), 'Pothole')[m
+[32m+ [m
+[32m+     const clearButton = screen.getByRole('button', { name: /clear filters/i })[m
+[32m+     await user.click(clearButton)[m
+[32m+ [m
+[32m+     expect(search).toHaveValue('')[m
+[32m+     expect(screen.getByLabelText('Category')).toHaveValue('')[m
+[32m+   })[m
+[32m+ [m
+[32m++>>>>>>> d7791a3a153ce2670831d4f31241860676c7fdd2[m
+    it('redirects a signed-out citizen from reporting to sign in', async () => {[m
+      window.history.replaceState({}, '', '/report')[m
+      render(<App />)[m
+[36m@@@ -48,4 -126,113 +136,116 @@@[m
+      expect(screen.getByText('Please correct the highlighted information.')).toBeInTheDocument()[m
+      expect(screen.getByText('Enter your full name.')).toBeInTheDocument()[m
+    })[m
+[32m++<<<<<<< HEAD[m
+[32m++=======[m
+[32m+ [m
+[32m+   it('shows a short-description warning only after the user interacts with the field', async () => {[m
+[32m+     const user = userEvent.setup()[m
+[32m+     vi.stubGlobal('fetch', vi.fn(async (url: string) => {[m
+[32m+       const resource = String(url)[m
+[32m+       if (resource.includes('/api/auth/me')) {[m
+[32m+         return new Response(JSON.stringify({ user: citizen }), {[m
+[32m+           status: 200,[m
+[32m+           headers: { 'Content-Type': 'application/json' },[m
+[32m+         })[m
+[32m+       }[m
+[32m+       if (resource.includes('public-summary')) {[m
+[32m+         return new Response(JSON.stringify({ stats: [], issues: [{ id: 'CP-PUN-2481', category: 'Pothole', title: 'Pothole', location: 'Pune', reported: new Date().toISOString(), status: 'Assigned' }] }), {[m
+[32m+           status: 200,[m
+[32m+           headers: { 'Content-Type': 'application/json' },[m
+[32m+         })[m
+[32m+       }[m
+[32m+       return new Response(JSON.stringify({ message: 'Authentication is required.' }), {[m
+[32m+         status: 401,[m
+[32m+         headers: { 'Content-Type': 'application/json' },[m
+[32m+       })[m
+[32m+     }))[m
+[32m+ [m
+[32m+     window.history.replaceState({}, '', '/report')[m
+[32m+     render(<App />)[m
+[32m+ [m
+[32m+     expect(await screen.findByRole('heading', { name: /report a civic issue/i })).toBeInTheDocument()[m
+[32m+ [m
+[32m+     await user.click(screen.getByRole('button', { name: /pothole/i }))[m
+[32m+ [m
+[32m+     const description = screen.getByLabelText(/issue description/i)[m
+[32m+     expect(screen.queryByText('Describe the issue in at least 20 characters.')).not.toBeInTheDocument()[m
+[32m+     await user.type(description, 'Short issue detail.')[m
+[32m+     await user.tab()[m
+[32m+     expect(screen.getByText('Describe the issue in at least 20 characters.')).toBeInTheDocument()[m
+[32m+   })[m
+[32m+ [m
+[32m+   it('only marks the description invalid after the user has interacted with it', async () => {[m
+[32m+     const user = userEvent.setup()[m
+[32m+     vi.stubGlobal('fetch', vi.fn(async (url: string) => {[m
+[32m+       const resource = String(url)[m
+[32m+       if (resource.includes('/api/auth/me')) {[m
+[32m+         return new Response(JSON.stringify({ user: citizen }), {[m
+[32m+           status: 200,[m
+[32m+           headers: { 'Content-Type': 'application/json' },[m
+[32m+         })[m
+[32m+       }[m
+[32m+       if (resource.includes('public-summary')) {[m
+[32m+         return new Response(JSON.stringify({ stats: [], issues: [{ id: 'CP-PUN-2481', category: 'Pothole', title: 'Pothole', location: 'Pune', reported: new Date().toISOString(), status: 'Assigned' }] }), {[m
+[32m+           status: 200,[m
+[32m+           headers: { 'Content-Type': 'application/json' },[m
+[32m+         })[m
+[32m+       }[m
+[32m+       return new Response(JSON.stringify({ message: 'Authentication is required.' }), {[m
+[32m+         status: 401,[m
+[32m+         headers: { 'Content-Type': 'application/json' },[m
+[32m+       })[m
+[32m+     }))[m
+[32m+ [m
+[32m+     window.history.replaceState({}, '', '/report')[m
+[32m+     render(<App />)[m
+[32m+ [m
+[32m+     expect(await screen.findByRole('heading', { name: /report a civic issue/i })).toBeInTheDocument()[m
+[32m+ [m
+[32m+     await user.click(screen.getByRole('button', { name: /pothole/i }))[m
+[32m+     const description = screen.getByLabelText(/issue description/i)[m
+[32m+ [m
+[32m+     expect(description).toHaveAttribute('aria-invalid', 'false')[m
+[32m+     await user.type(description, 'Short issue detail.')[m
+[32m+     expect(description).toHaveAttribute('aria-invalid', 'false')[m
+[32m+     await user.tab()[m
+[32m+     expect(description).toHaveAttribute('aria-invalid', 'true')[m
+[32m+     expect(screen.getByText('Describe the issue in at least 20 characters.')).toBeInTheDocument()[m
+[32m+   })[m
+[32m+ [m
+[32m+   it('shows accessible validation feedback on the citizen report form', async () => {[m
+[32m+     const user = userEvent.setup()[m
+[32m+     vi.stubGlobal('fetch', vi.fn(async (url: string) => {[m
+[32m+       const resource = String(url)[m
+[32m+       if (resource.includes('/api/auth/me')) {[m
+[32m+         return new Response(JSON.stringify({ user: citizen }), {[m
+[32m+           status: 200,[m
+[32m+           headers: { 'Content-Type': 'application/json' },[m
+[32m+         })[m
+[32m+       }[m
+[32m+       if (resource.includes('public-summary')) {[m
+[32m+         return new Response(JSON.stringify({ stats: [], issues: [{ id: 'CP-PUN-2481', category: 'Pothole', title: 'Pothole', location: 'Pune', reported: new Date().toISOString(), status: 'Assigned' }] }), {[m
+[32m+           status: 200,[m
+[32m+           headers: { 'Content-Type': 'application/json' },[m
+[32m+         })[m
+[32m+       }[m
+[32m+       return new Response(JSON.stringify({ message: 'Authentication is required.' }), {[m
+[32m+         status: 401,[m
+[32m+         headers: { 'Content-Type': 'application/json' },[m
+[32m+       })[m
+[32m+     }))[m
+[32m+ [m
+[32m+     window.history.replaceState({}, '', '/report')[m
+[32m+     render(<App />)[m
+[32m+ [m
+[32m+     expect(await screen.findByRole('heading', { name: /report a civic issue/i })).toBeInTheDocument()[m
+[32m+ [m
+[32m+     await user.click(screen.getByRole('button', { name: /pothole/i }))[m
+[32m+     await user.click(screen.getByRole('button', { name: /continue/i }))[m
+[32m+ [m
+[32m+     const description = screen.getByLabelText(/issue description/i)[m
+[32m+     expect(description).toHaveAttribute('aria-invalid', 'true')[m
+[32m+     expect(screen.getByText('Describe the issue in at least 20 characters.')).toBeInTheDocument()[m
+[32m+   })[m
+[32m++>>>>>>> d7791a3a153ce2670831d4f31241860676c7fdd2[m
+  })[m
+[1mdiff --cc src/pages/admin-dashboard-page.tsx[m
+[1mindex e226791,1b5cf98..0000000[m
+[1m--- a/src/pages/admin-dashboard-page.tsx[m
+[1m+++ b/src/pages/admin-dashboard-page.tsx[m
+[36m@@@ -35,6 -35,8 +35,11 @@@[m [mexport function AdminDashboardPage() [m
+    function applyFilters(event: FormEvent) { event.preventDefault(); setFilters(draft) }[m
+    function clearFilters() { setDraft(emptyFilters); setFilters(emptyFilters) }[m
+  [m
+[32m++<<<<<<< HEAD[m
+[32m++=======[m
+[32m+   const hasActiveDraft = Object.values(draft).some(Boolean)[m
+[32m+   const hasActiveFilters = Object.values(filters).some(Boolean)[m
+[32m++>>>>>>> d7791a3a153ce2670831d4f31241860676c7fdd2[m
+    const maxCategory = Math.max(...(dashboard?.analytics.byCategory.map((item) => item.count) ?? [1]), 1)[m
+    return <><Header /><main id="main-content" className="container py-9 sm:py-12"><div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between"><div><div className="flex flex-wrap items-center gap-2"><Badge>Municipal operations</Badge>{dashboard && <Badge variant="outline">{dashboard.scope}</Badge>}</div><h1 className="mt-3 font-display text-3xl fon
