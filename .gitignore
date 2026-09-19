@@ -5,5 +5,6 @@ test-results
 uploads
 .env
 .env.*
+!.env.example
 *.log
 coverage

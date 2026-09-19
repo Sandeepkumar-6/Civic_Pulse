@@ -4,7 +4,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently -k -n API,WEB -c green,cyan \"npm:dev:server\" \"npm:dev:client\"",
+    "setup:env": "node server/src/scripts/setup-env.js",
+    "dev": "npm run setup:env && concurrently -k -n API,WEB -c green,cyan \"npm:dev:server\" \"npm:dev:client\"",
     "dev:client": "vite --host 0.0.0.0",
     "dev:server": "node --watch-path=server/src server/src/server.js",
     "start": "node server/src/server.js",

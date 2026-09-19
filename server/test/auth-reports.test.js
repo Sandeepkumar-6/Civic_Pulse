@@ -166,8 +166,6 @@ describe('authentication and citizen reports API', () => {
     expect(scopedReports.body.reports.every((report) => report.ward === 'Aundh-Baner Ward')).toBe(true)
   })
 
-<<<<<<< HEAD
-=======
   it('returns field-level details when a persisted report fails validation', async () => {
     const { Report } = await import('../src/models/Report.js')
     const { User } = await import('../src/models/User.js')
@@ -190,7 +188,6 @@ describe('authentication and citizen reports API', () => {
     expect(response.body.errors['updates.0.actorRole']).toBe('Path `actorRole` is required.')
   })
 
->>>>>>> d7791a3a153ce2670831d4f31241860676c7fdd2
   it('returns citizen dashboard data from owned reports and persists profile settings', async () => {
     const dashboard = await citizenAgent.get('/api/dashboard/citizen')
     expect(dashboard.status).toBe(200)

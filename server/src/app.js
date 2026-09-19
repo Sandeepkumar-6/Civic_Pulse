@@ -63,14 +63,10 @@ export function createApp({ aiService = civicAiService } = {}) {
   app.use((error, _req, res, _next) => {
     if (error.type === 'entity.parse.failed') return res.status(400).json({ message: 'Request body must contain valid JSON.' })
     if (error.type === 'entity.too.large') return res.status(413).json({ message: 'Request is too large.' })
-<<<<<<< HEAD
-    if (error.name === 'ValidationError') return res.status(400).json({ message: 'Please check the supplied information.' })
-=======
     if (error.name === 'ValidationError') {
       const errors = Object.fromEntries(Object.entries(error.errors ?? {}).map(([path, issue]) => [path, issue.message]))
       return res.status(400).json({ message: 'Please check the supplied information.', ...(Object.keys(errors).length ? { errors } : {}) })
     }
->>>>>>> d7791a3a153ce2670831d4f31241860676c7fdd2
     if (error instanceof multer.MulterError) {
       const message = error.code === 'LIMIT_FILE_SIZE' ? 'Each photograph must be 5 MB or smaller.' : error.code === 'LIMIT_FILE_COUNT' ? 'You can add up to four photographs.' : 'The photograph upload could not be completed.'
       return res.status(400).json({ message })
