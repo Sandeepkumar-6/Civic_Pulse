@@ -6,8 +6,17 @@ import App from './App'
 import { AuthProvider } from './context/auth-context'
 import { AdminDashboardPage } from './pages/admin-dashboard-page'
 
+const citizen = {
+  id: 'citizen-1',
+  name: 'Asha Rao',
+  email: 'asha@example.com',
+  phone: '+919876543210',
+  role: 'citizen',
+}
+
 beforeEach(() => {
   window.history.replaceState({}, '', '/')
+  Object.defineProperty(window, 'scrollTo', { value: vi.fn(), writable: true })
   vi.stubGlobal('fetch', vi.fn(async (url: string) => url.includes('public-summary') ? new Response(JSON.stringify({ stats: [], issues: [{ id: 'CP-PUN-2481', category: 'Pothole', title: 'Pothole', location: 'Pune', reported: new Date().toISOString(), status: 'Assigned' }] }), { status: 200, headers: { 'Content-Type': 'application/json' } }) : new Response(JSON.stringify({ message: 'Authentication is required.' }), {
     status: 401,
     headers: { 'Content-Type': 'application/json' },
@@ -116,5 +125,40 @@ describe('CivicPulse application', () => {
     await user.click(await screen.findByRole('button', { name: 'Create account' }))
     expect(screen.getByText('Please correct the highlighted information.')).toBeInTheDocument()
     expect(screen.getByText('Enter your full name.')).toBeInTheDocument()
+  })
+
+  it('shows accessible validation feedback on the citizen report form', async () => {
+    const user = userEvent.setup()
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+      const resource = String(url)
+      if (resource.includes('/api/auth/me')) {
+        return new Response(JSON.stringify({ user: citizen }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      }
+      if (resource.includes('public-summary')) {
+        return new Response(JSON.stringify({ stats: [], issues: [{ id: 'CP-PUN-2481', category: 'Pothole', title: 'Pothole', location: 'Pune', reported: new Date().toISOString(), status: 'Assigned' }] }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      }
+      return new Response(JSON.stringify({ message: 'Authentication is required.' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }))
+
+    window.history.replaceState({}, '', '/report')
+    render(<App />)
+
+    expect(await screen.findByRole('heading', { name: /report a civic issue/i })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /pothole/i }))
+    await user.click(screen.getByRole('button', { name: /continue/i }))
+
+    const description = screen.getByLabelText(/issue description/i)
+    expect(description).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByText('Describe the issue in at least 20 characters.')).toBeInTheDocument()
   })
 })
