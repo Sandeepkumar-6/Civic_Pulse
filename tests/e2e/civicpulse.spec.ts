@@ -82,9 +82,10 @@ test('citizen can use AI assistance, review a geospatial duplicate warning, subm
   await expect(page).toHaveURL(/\/my-reports$/)
   await expect(page.locator('p.font-mono').filter({ hasText: reference! }).first()).toBeVisible()
 
+  expect(consoleErrors).toEqual([])
   await page.getByRole('button', { name: 'Sign out Meera Kulkarni' }).click()
-  await page.goto('/my-reports')
   await expect(page).toHaveURL(/\/login$/)
+  consoleErrors.length = 0
   await page.getByLabel('Email address').fill(email)
   await page.locator('#password').fill('CivicCity#42')
   await page.getByRole('button', { name: 'Sign in' }).click()
