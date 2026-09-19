@@ -42,6 +42,20 @@ describe('reportQueryFilters', () => {
     expect(reportQueryFilters({ category: '', status: undefined })).toEqual({})
     expect(reportQueryFilters(null)).toEqual({})
   })
+
+  it('ignores non-string values instead of passing them to Mongo', () => {
+    expect(reportQueryFilters({ category: { $ne: 'Pothole' }, status: ['Resolved'] })).toEqual({})
+    expect(reportQueryFilters({ category: 42, status: true })).toEqual({})
+  })
+
+  it('keeps a valid category even when the status is invalid, and vice versa', () => {
+    expect(reportQueryFilters({ category: 'Pothole', status: 'Nope' })).toEqual({ category: 'Pothole' })
+    expect(reportQueryFilters({ category: 'Nope', status: 'Resolved' })).toEqual({ status: 'Resolved' })
+  })
+
+  it('is case-sensitive: lowercase whitelist values are rejected', () => {
+    expect(reportQueryFilters({ category: 'pothole', status: 'resolved' })).toEqual({})
+  })
 })
 
 describe('reportsInBounds antimeridian handling', () => {
@@ -64,6 +78,20 @@ describe('reportsInBounds antimeridian handling', () => {
     expect(eastern[0][1][0]).toBe(180)
     expect(western[0][0][0]).toBe(-180)
     expect(western[0][1][0]).toBe(-178)
+  })
+
+  it('keeps the western polygon on the far side of the antimeridian closed correctly', async () => {
+    await reportsInBounds({ west: 179, south: -5, east: -179, north: 5 })
+    const geometry = findMock.mock.calls[0][0].geo.$geoWithin.$geometry
+    expect(geometry.type).toBe('MultiPolygon')
+    // eastern shell ends exactly at +180, western shell starts exactly at -180
+    expect(geometry.coordinates[0][0][1]).toEqual([180, -5])
+    expect(geometry.coordinates[1][0][0]).toEqual([-180, -5])
+  })
+
+  it('treats west === east as a degenerate normal polygon, not an antimeridian split', async () => {
+    await reportsInBounds({ west: 73, south: 0, east: 73, north: 1 })
+    expect(findMock.mock.calls[0][0].geo.$geoWithin.$geometry.type).toBe('Polygon')
   })
 
   it('applies safe category and status filters together with the geo query', async () => {
@@ -113,6 +141,31 @@ describe('findPossibleDuplicates', () => {
     ])
     const results = await findPossibleDuplicates({ category: 'Pothole', description: 'pothole near the bus shelter', latitude: 18.55, longitude: 73.8 })
     expect(results).toEqual([])
+  })
+
+  it('includes borderline reports exactly at the 0.18 similarity threshold', async () => {
+    // "pothole near the bus shelter" vs "pothole in the bus shelter" share one token
+    // of {pothole, bus, shelter} against a union of 5 -> similarity 0.2 >= 0.18
+    aggregateMock.mockResolvedValueOnce([
+      { _id: 'borderline', description: 'pothole in the bus shelter', distanceMetres: 180 },
+    ])
+    const results = await findPossibleDuplicates({ category: 'Pothole', description: 'pothole near the bus shelter', latitude: 18.55, longitude: 73.8 })
+    expect(results).toHaveLength(1)
+    expect(results[0].similarity).toBeGreaterThanOrEqual(0.18)
+  })
+
+  it('ignores stop words and short tokens when scoring similarity', async () => {
+    // only the meaningful token "pothole" is shared; "near"/"the" are stop words
+    aggregateMock.mockResolvedValueOnce([
+      { _id: 'stopword-only', description: 'pothole', distanceMetres: 180 },
+    ])
+    const results = await findPossibleDuplicates({ category: 'Pothole', description: 'pothole near the bus shelter', latitude: 18.55, longitude: 73.8 })
+    expect(results.map((report) => report._id)).toEqual(['stopword-only'])
+  })
+
+  it('returns no duplicates for a blank description', async () => {
+    await findPossibleDuplicates({ category: 'Pothole', description: '   ', latitude: 18.55, longitude: 73.8 })
+    expect(aggregateMock).not.toHaveBeenCalled()
   })
 
   it('honours the limit on returned duplicates', async () => {

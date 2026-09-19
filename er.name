@@ -1,0 +1,147 @@
+[1mdiff --cc server/src/app.js[m
+[1mindex 010df45,1bcf990..0000000[m
+[1m--- a/server/src/app.js[m
+[1m+++ b/server/src/app.js[m
+[36m@@@ -63,7 -63,10 +63,14 @@@[m [mexport function createApp({ aiService [m
+    app.use((error, _req, res, _next) => {[m
+      if (error.type === 'entity.parse.failed') return res.status(400).json({ message: 'Request body must contain valid JSON.' })[m
+      if (error.type === 'entity.too.large') return res.status(413).json({ message: 'Request is too large.' })[m
+[32m++<<<<<<< HEAD[m
+[32m +    if (error.name === 'ValidationError') return res.status(400).json({ message: 'Please check the supplied information.' })[m
+[32m++=======[m
+[32m+     if (error.name === 'ValidationError') {[m
+[32m+       const errors = Object.fromEntries(Object.entries(error.errors ?? {}).map(([path, issue]) => [path, issue.message]))[m
+[32m+       return res.status(400).json({ message: 'Please check the supplied information.', ...(Object.keys(errors).length ? { errors } : {}) })[m
+[32m+     }[m
+[32m++>>>>>>> d7791a3a153ce2670831d4f31241860676c7fdd2[m
+      if (error instanceof multer.MulterError) {[m
+        const message = error.code === 'LIMIT_FILE_SIZE' ? 'Each photograph must be 5 MB or smaller.' : error.code === 'LIMIT_FILE_COUNT' ? 'You can add up to four photographs.' : 'The photograph upload could not be completed.'[m
+        return res.status(400).json({ message })[m
+[1mdiff --cc server/test/auth-reports.test.js[m
+[1mindex a6d9bfc,e17bdc6..0000000[m
+[1m--- a/server/test/auth-reports.test.js[m
+[1m+++ b/server/test/auth-reports.test.js[m
+[36m@@@ -166,6 -166,28 +166,31 @@@[m [mdescribe('authentication and citizen re[m
+      expect(scopedReports.body.reports.every((report) => report.ward === 'Aundh-Baner Ward')).toBe(true)[m
+    })[m
+  [m
+[32m++<<<<<<< HEAD[m
+[32m++=======[m
+[32m+   it('returns field-level details when a persisted report fails validation', async () => {[m
+[32m+     const { Report } = await import('../src/models/Report.js')[m
+[32m+     const { User } = await import('../src/models/User.js')[m
+[32m+     const citizen = await User.findOne({ email: 'meera.kulkarni@civicpulse.local' })[m
+[32m+     const inserted = await Report.collection.insertOne({[m
+[32m+       reference: 'CP-2026-INVALID', citizen: citizen.id, category: 'Pothole',[m
+[32m+       description: 'A persisted report with an incomplete status history.',[m
+[32m+       location: { address: 'Aundh Road crossing', city: 'Pune', state: 'Maharashtra', pincode: '411007' },[m
+[32m+       status: 'Submitted', photos: [], updates: [{ status: 'Submitted' }],[m
+[32m+       createdAt: new Date(), updatedAt: new Date(),[m
+[32m+     })[m
+[32m+     const officerAgent = request.agent(app)[m
+[32m+     await officerAgent.post('/api/auth/login').send({ email: 'officer.api@civicpulse.local', password: 'WardService#9' })[m
+[32m+ [m
+[32m+     const response = await officerAgent.patch(`/api/reports/${inserted.insertedId}/status`).send({ status: 'Acknowledged', message: 'Queued for review.' })[m
+[32m+ [m
+[32m+     expect(response.status).toBe(400)[m
+[32m+     expect(response.body.message).toBe('Please check the supplied information.')[m
+[32m+     expect(response.body.errors['updates.0.message']).toBe('Path `message` is required.')[m
+[32m+     expect(response.body.errors['updates.0.actorRole']).toBe('Path `actorRole` is required.')[m
+[32m+   })[m
+[32m+ [m
+[32m++>>>>>>> d7791a3a153ce2670831d4f31241860676c7fdd2[m
+    it('returns citizen dashboard data from owned reports and persists profile settings', async () => {[m
+      const dashboard = await citizenAgent.get('/api/dashboard/citizen')[m
+      expect(dashboard.status).toBe(200)[m
+[1mdiff --cc src/App.test.tsx[m
+[1mindex 08d27c1,9022307..0000000[m
+[1m--- a/src/App.test.tsx[m
+[1m+++ b/src/App.test.tsx[m
+[36m@@@ -1,10 -1,22 +1,29 @@@[m
+  import { cleanup, render, screen, waitFor } from '@testing-library/react'[m
+  import userEvent from '@testing-library/user-event'[m
+  import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'[m
+[32m++<<<<<<< HEAD[m
+[32m +import App from './App'[m
+[32m +[m
+[32m +beforeEach(() => {[m
+[32m +  window.history.replaceState({}, '', '/')[m
+[32m++=======[m
+[32m+ import { BrowserRouter } from 'react-router-dom'[m
+[32m+ import App from './App'[m
+[32m+ import { AuthProvider } from './context/auth-context'[m
+[32m+ import { AdminDashboardPage } from './pages/admin-dashboard-page'[m
+[32m+ [m
+[32m+ const citizen = {[m
+[32m+   id: 'citizen-1',[m
+[32m+   name: 'Asha Rao',[m
+[32m+   email: 'asha@example.com',[m
+[32m+   phone: '+919876543210',[m
+[32m+   role: 'citizen',[m
+[32m+ }[m
+[32m+ [m
+[32m+ beforeEach(() => {[m
+[32m+   window.history.replaceState({}, '', '/')[m
+[32m+   Object.defineProperty(window, 'scrollTo', { value: vi.fn(), writable: true })[m
+[32m++>>>>>>> d7791a3a153ce2670831d4f31241860676c7fdd2[m
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => url.includes('public-summary') ? new Response(JSON.stringify({ stats: [], issues: [{ id: 'CP-PUN-2481', category: 'Pothole', title: 'Pothole', location: 'Pune', reported: new Date().toISOString(), status: 'Assigned' }] }), { status: 200, headers: { 'Content-Type': 'application/json' } }) : new Response(JSON.stringify({ message: 'Authentication is required.' }), {[m
+      status: 401,[m
+      headers: { 'Content-Type': 'application/json' },[m
+[36m@@@ -34,6 -46,72 +53,75 @@@[m [mdescribe('CivicPulse application', () =[m
+      expect(screen.getAllByText(/CP-PUN-2481/).length).toBeGreaterThan(0)[m
+    })[m
+  [m
+[32m++<<<<<<< HEAD[m
+[32m++=======[m
+[32m+   it('lets municipal staff clear draft filters before applying them', async () => {[m
+[32m+     const user = userEvent.setup()[m
+[32m+     vi.stubGlobal('fetch', vi.fn(async (url: string) => {[m
+[32m+       if (url.includes('/api/dashboard/municipal')) {[m
+[32m+         return new Response(JSON.stringify({[m
+[32m+           analytics: {[m
+[32m+             total: 1,[m
+[32m+             active: 1,[m
+[32m+             resolved: 0,[m
+[32m+             resolutionRate: 0,[m
+[32m+             urgent: 0,[m
+[32m+             byStatus: [{ label: 'Submitted', count: 1 }],[m
+[32m+             byCategory: [{ label: 'Pothole', count: 1 }],[m
+[32m+             byWard: [{ label: 'Aundh-Baner Ward', count: 1 }],[m
+[32m+           },[m
+[32m+           filters: {[m
+[32m+             categories: ['Pothole', 'Streetlight'],[m
+[32m+             statuses: ['Submitted', 'In Progress'],[m
+[32m+             wards: ['Aundh-Baner Ward'],[m
+[32m+           },[m
+[32m+           reports: [{[m
+[32m+             id: 'r-1',[m
+[32m+             reference: 'CP-2026-PUN548',[m
+[32m+             category: 'Pothole',[m
+[32m+             description: 'Pothole on road',[m
+[32m+             status: 'Submitted',[m
+[32m+             priority: 'Urgent',[m
+[32m+             citizen: { id: 'c-1', name: 'Citizen One', email: 'citizen@example.com' },[m
+[32m+             assignedTo: { id: 'u-1', name: 'Ward Services Officer', email: 'officer@example.com' },[m
+[32m+             location: { address: 'Aundh Road', landmark: 'Near station', city: 'Pune', state: 'Maharashtra', pincode: '411007' },[m
+[32m+             photos: [],[m
+[32m+             updates: [],[m
+[32m+             createdAt: new Date().toISOString(),[m
+[32m+             updatedAt: new Date().toISOString(),[m
+[32m+             ward: 'Aundh-Baner Ward',[m
+[32m+           }],[m
+[32m+           assignees: [],[m
+[32m+           scope: 'Pune municipal zone',[m
+[32m+         }), { status: 200, headers: { 'Content-Type': 'application/json' } })[m
+[32m+       }[m
+[32m+ [m
+[32m+       return new Response(JSON.stringify({ message: 'Authentication is required.' }), {[m
+[32m+         status: 401,[m
+[32m+         headers: { 'Content-Type': 'application/json' },[m
+[32m+       })[m
+[32m+     }))[m
+[32m+ [m
+[32m+     render([m
+[32m+       <BrowserRouter>[m
+[32m+         <AuthProvider>[m
+[32m+           <AdminDashboardPage />[m
+[32m+  

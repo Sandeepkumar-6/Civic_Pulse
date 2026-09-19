@@ -166,6 +166,31 @@ describe('authentication and citizen reports API', () => {
     expect(scopedReports.body.reports.every((report) => report.ward === 'Aundh-Baner Ward')).toBe(true)
   })
 
+<<<<<<< HEAD
+=======
+  it('returns field-level details when a persisted report fails validation', async () => {
+    const { Report } = await import('../src/models/Report.js')
+    const { User } = await import('../src/models/User.js')
+    const citizen = await User.findOne({ email: 'meera.kulkarni@civicpulse.local' })
+    const inserted = await Report.collection.insertOne({
+      reference: 'CP-2026-INVALID', citizen: citizen.id, category: 'Pothole',
+      description: 'A persisted report with an incomplete status history.',
+      location: { address: 'Aundh Road crossing', city: 'Pune', state: 'Maharashtra', pincode: '411007' },
+      status: 'Submitted', photos: [], updates: [{ status: 'Submitted' }],
+      createdAt: new Date(), updatedAt: new Date(),
+    })
+    const officerAgent = request.agent(app)
+    await officerAgent.post('/api/auth/login').send({ email: 'officer.api@civicpulse.local', password: 'WardService#9' })
+
+    const response = await officerAgent.patch(`/api/reports/${inserted.insertedId}/status`).send({ status: 'Acknowledged', message: 'Queued for review.' })
+
+    expect(response.status).toBe(400)
+    expect(response.body.message).toBe('Please check the supplied information.')
+    expect(response.body.errors['updates.0.message']).toBe('Path `message` is required.')
+    expect(response.body.errors['updates.0.actorRole']).toBe('Path `actorRole` is required.')
+  })
+
+>>>>>>> d7791a3a153ce2670831d4f31241860676c7fdd2
   it('returns citizen dashboard data from owned reports and persists profile settings', async () => {
     const dashboard = await citizenAgent.get('/api/dashboard/citizen')
     expect(dashboard.status).toBe(200)
