@@ -127,6 +127,82 @@ describe('CivicPulse application', () => {
     expect(screen.getByText('Enter your full name.')).toBeInTheDocument()
   })
 
+  it('shows a short-description warning only after the user interacts with the field', async () => {
+    const user = userEvent.setup()
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+      const resource = String(url)
+      if (resource.includes('/api/auth/me')) {
+        return new Response(JSON.stringify({ user: citizen }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      }
+      if (resource.includes('public-summary')) {
+        return new Response(JSON.stringify({ stats: [], issues: [{ id: 'CP-PUN-2481', category: 'Pothole', title: 'Pothole', location: 'Pune', reported: new Date().toISOString(), status: 'Assigned' }] }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      }
+      return new Response(JSON.stringify({ message: 'Authentication is required.' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }))
+
+    window.history.replaceState({}, '', '/report')
+    render(<App />)
+
+    expect(await screen.findByRole('heading', { name: /report a civic issue/i })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /pothole/i }))
+    await user.click(screen.getByRole('button', { name: /continue/i }))
+
+    const description = screen.getByLabelText(/issue description/i)
+    expect(screen.queryByText('Describe the issue in at least 20 characters.')).not.toBeInTheDocument()
+    await user.type(description, 'Short issue detail.')
+    await user.click(screen.getByRole('button', { name: /continue/i }))
+    expect(screen.getByText('Describe the issue in at least 20 characters.', { selector: '#description-error' })).toBeInTheDocument()
+  })
+
+  it('only marks the description invalid after the user has interacted with it', async () => {
+    const user = userEvent.setup()
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+      const resource = String(url)
+      if (resource.includes('/api/auth/me')) {
+        return new Response(JSON.stringify({ user: citizen }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      }
+      if (resource.includes('public-summary')) {
+        return new Response(JSON.stringify({ stats: [], issues: [{ id: 'CP-PUN-2481', category: 'Pothole', title: 'Pothole', location: 'Pune', reported: new Date().toISOString(), status: 'Assigned' }] }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      }
+      return new Response(JSON.stringify({ message: 'Authentication is required.' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }))
+
+    window.history.replaceState({}, '', '/report')
+    render(<App />)
+
+    expect(await screen.findByRole('heading', { name: /report a civic issue/i })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /pothole/i }))
+    await user.click(screen.getByRole('button', { name: /continue/i }))
+    const description = screen.getByLabelText(/issue description/i)
+
+    expect(description).toHaveAttribute('aria-invalid', 'false')
+    await user.type(description, 'Short issue detail.')
+    expect(description).toHaveAttribute('aria-invalid', 'false')
+    await user.click(screen.getByRole('button', { name: /continue/i }))
+    expect(description).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByText('Describe the issue in at least 20 characters.', { selector: '#description-error' })).toBeInTheDocument()
+  })
+
   it('shows accessible validation feedback on the citizen report form', async () => {
     const user = userEvent.setup()
     vi.stubGlobal('fetch', vi.fn(async (url: string) => {
@@ -158,7 +234,8 @@ describe('CivicPulse application', () => {
     await user.click(screen.getByRole('button', { name: /continue/i }))
 
     const description = screen.getByLabelText(/issue description/i)
+    await user.click(screen.getByRole('button', { name: /continue/i }))
     expect(description).toHaveAttribute('aria-invalid', 'true')
-    expect(screen.getByText('Describe the issue in at least 20 characters.')).toBeInTheDocument()
+    expect(screen.getByText('Describe the issue in at least 20 characters.', { selector: '#description-error' })).toBeInTheDocument()
   })
 })
