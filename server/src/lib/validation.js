@@ -84,7 +84,7 @@ export const aiAnalysisSchema = z.object({ description: z.string().trim().min(20
 
 export function validationError(error) {
   return {
-    message: 'Please correct the highlighted information.',
+    message: 'Please check the supplied information.',
     errors: error.issues.reduce((result, issue) => {
       result[issue.path.join('.')] = issue.message
       return result

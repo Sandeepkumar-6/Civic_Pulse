@@ -188,6 +188,21 @@ describe('authentication and citizen reports API', () => {
     expect(response.body.errors['updates.0.actorRole']).toBe('Path `actorRole` is required.')
   })
 
+  it('returns structured field errors for invalid status payloads before a database write', async () => {
+    const officerAgent = request.agent(app)
+    await officerAgent.post('/api/auth/login').send({ email: 'officer.api@civicpulse.local', password: 'WardService#9' })
+
+    const response = await officerAgent.patch(`/api/reports/${createdReportId}/status`).send({
+      status: 'Acknowledged',
+      ward: 'Aundh-Baner Ward',
+      assignedTo: 'not-a-valid-objectid',
+    })
+
+    expect(response.status).toBe(400)
+    expect(response.body.message).toBe('Please check the supplied information.')
+    expect(response.body.errors.assignedTo).toMatch(/valid municipal officer|Select a valid municipal officer/i)
+  })
+
   it('returns citizen dashboard data from owned reports and persists profile settings', async () => {
     const dashboard = await citizenAgent.get('/api/dashboard/citizen')
     expect(dashboard.status).toBe(200)

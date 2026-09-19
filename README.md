@@ -13,9 +13,14 @@ development MongoDB Atlas database. Use a dedicated development database.
 npm install
 ```
 
-Copy `.env.example` to `.env` (`Copy-Item .env.example .env` in PowerShell,
-`cp .env.example .env` on macOS/Linux). Set `MONGODB_URI` and replace
-`JWT_SECRET` with a random secret of at least 32 characters. Never commit it.
+Run the bootstrap helper to create a local `.env` from the sample config:
+
+```bash
+npm run setup:env
+```
+
+Then review `.env` and set `MONGODB_URI` and a strong `JWT_SECRET` if needed.
+Never commit it.
 
 ```bash
 npm run seed
