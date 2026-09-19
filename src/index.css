@@ -1,0 +1,97 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 45 40% 98%;
+    --foreground: 170 29% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 170 29% 12%;
+    --primary: 174 79% 20%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 165 25% 93%;
+    --secondary-foreground: 174 68% 16%;
+    --muted: 160 12% 93%;
+    --muted-foreground: 168 12% 36%;
+    --accent: 32 94% 57%;
+    --accent-foreground: 170 29% 11%;
+    --destructive: 2 72% 44%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 149 69% 29%;
+    --success-foreground: 0 0% 100%;
+    --warning: 34 90% 44%;
+    --warning-foreground: 27 78% 20%;
+    --border: 165 16% 84%;
+    --input: 165 16% 77%;
+    --ring: 174 79% 20%;
+    --shadow: 172 45% 12%;
+    --radius: 1rem;
+  }
+
+  .dark {
+    --background: 174 30% 7%;
+    --foreground: 150 20% 95%;
+    --card: 174 25% 10%;
+    --card-foreground: 150 20% 95%;
+    --primary: 165 52% 58%;
+    --primary-foreground: 174 45% 8%;
+    --secondary: 173 18% 16%;
+    --secondary-foreground: 150 20% 94%;
+    --muted: 173 16% 15%;
+    --muted-foreground: 160 11% 68%;
+    --accent: 35 92% 61%;
+    --accent-foreground: 174 45% 8%;
+    --destructive: 3 72% 61%;
+    --destructive-foreground: 174 30% 7%;
+    --success: 149 55% 56%;
+    --success-foreground: 174 35% 7%;
+    --warning: 38 86% 58%;
+    --warning-foreground: 174 35% 7%;
+    --border: 171 16% 23%;
+    --input: 171 15% 30%;
+    --ring: 165 52% 58%;
+    --shadow: 180 80% 2%;
+  }
+
+  * { @apply border-border; }
+  html { scroll-behavior: smooth; scroll-padding-top: 6rem; }
+  body { @apply bg-background font-sans text-foreground antialiased; min-width: 320px; }
+  ::selection { @apply bg-accent/35 text-foreground; }
+  h1, h2, h3 { text-wrap: balance; }
+  p { text-wrap: pretty; }
+  button, a, input, textarea, select { -webkit-tap-highlight-color: transparent; }
+  :focus-visible { outline-offset: 3px; }
+}
+
+@layer components {
+  .section-shell { @apply container py-16 sm:py-20 lg:py-24; }
+  .eyebrow { @apply mb-4 inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-3 py-1.5 text-xs font-extrabold uppercase tracking-[0.13em] text-primary; }
+  .section-title { @apply font-display text-3xl font-extrabold tracking-[-0.04em] sm:text-4xl lg:text-5xl; }
+  .section-copy { @apply mt-4 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg; }
+  .dot-grid {
+    background-image: radial-gradient(hsl(var(--primary) / 0.12) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+  .civic-map { @apply relative z-0 h-full min-h-80 w-full overflow-hidden rounded-[1.5rem] bg-secondary; }
+  .civic-map .leaflet-control-zoom a { @apply grid size-11 place-items-center border-border bg-card text-foreground; line-height: 2.75rem; }
+  .civic-map .leaflet-control-attribution { @apply bg-card/90 text-[10px] text-muted-foreground; }
+  .civic-cluster-marker { @apply grid size-11 place-items-center rounded-full border-4 border-white bg-primary font-display text-sm font-extrabold text-primary-foreground shadow-lg; }
+  .civic-report-marker { @apply relative block h-9 w-8 rounded-[50%_50%_50%_0] border-[3px] border-white bg-primary shadow-lg; transform: rotate(-45deg); }
+  .civic-report-marker > span { @apply absolute left-1/2 top-1/2 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white; }
+  .civic-report-marker--roads { @apply bg-[#d97706]; }
+  .civic-report-marker--waste { @apply bg-[#15803d]; }
+  .civic-report-marker--lighting { @apply bg-[#ca8a04]; }
+  .civic-report-marker--water { @apply bg-[#0369a1]; }
+  .civic-report-marker--sanitation { @apply bg-[#7c3aed]; }
+  .civic-report-marker--signage { @apply bg-[#be123c]; }
+  .civic-location-marker { @apply relative block h-10 w-9 rounded-[50%_50%_50%_0] border-4 border-white bg-accent shadow-lg; transform: rotate(-45deg); }
+  .civic-location-marker::after { content: ''; @apply absolute left-1/2 top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent-foreground; }
+  .leaflet-popup-content-wrapper { @apply rounded-2xl bg-card text-card-foreground shadow-soft; }
+  .leaflet-popup-tip { @apply bg-card; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
